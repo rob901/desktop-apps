@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "desktop-widgets",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/rob901/desktop-widgets.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a8b9f5aa35146b16a0087431d79be340baa2199c"
+      }
+    }
+  ],
+  "version" : 2
+}

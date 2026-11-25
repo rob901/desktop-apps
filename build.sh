@@ -1,18 +1,12 @@
 #!/bin/zsh
-# Builds build/DesktopNotes.app. `./build.sh install` also copies it to /Applications.
+# Builds build/DesktopNotes.app. `./build.sh install` also copies it to /Applications and launches it.
+# Set DESKTOPKIT_PATH=../desktop-framework to build against a local framework checkout.
 set -euo pipefail
 cd "$(dirname "$0")"
-APP=build/DesktopNotes.app
-rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS"
-cp Info.plist "$APP/Contents/Info.plist"
-swiftc -swift-version 5 -O -target arm64-apple-macos14.0 Sources/*.swift -o "$APP/Contents/MacOS/DesktopNotes"
-codesign --force --sign - "$APP" >/dev/null
-echo "Built $APP"
-if [[ "${1:-}" == "install" ]]; then
-  pkill -x DesktopNotes 2>/dev/null || true
-  rm -rf /Applications/DesktopNotes.app
-  cp -R "$APP" /Applications/
-  open /Applications/DesktopNotes.app
-  echo "Installed to /Applications and launched"
+if [[ -n "${DESKTOPKIT_PATH:-}" ]]; then
+  KIT="$DESKTOPKIT_PATH"
+else
+  swift package resolve
+  KIT=.build/checkouts/desktop-widgets
 fi
+exec "$KIT/Scripts/bundle-app.sh" . DesktopNotes "$@"

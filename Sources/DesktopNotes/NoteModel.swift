@@ -1,4 +1,5 @@
 import AppKit
+import DesktopKit
 
 enum NoteColor: String, Codable, CaseIterable {
     case yellow, blue, green, pink, purple, gray
@@ -14,18 +15,13 @@ enum NoteColor: String, Codable, CaseIterable {
         }
     }
 
-    var header: NSColor { body.blended(withFraction: 0.12, of: .black) ?? body }
+    var theme: WidgetTheme { WidgetTheme(body: body) }
     var title: String { rawValue.capitalized }
-
-    func swatch() -> NSImage {
-        NSImage(size: NSSize(width: 12, height: 12), flipped: false) { r in
-            self.header.setFill()
-            NSBezierPath(roundedRect: r.insetBy(dx: 0.5, dy: 0.5), xRadius: 2, yRadius: 2).fill()
-            return true
-        }
-    }
+    func swatch() -> NSImage { theme.swatch() }
 }
 
+/// One saved note. The JSON shape matches the original Desktop Stickies, so existing
+/// notes.json files load unchanged.
 struct NoteData: Codable {
     var id: UUID
     var x: Double
@@ -37,11 +33,24 @@ struct NoteData: Codable {
     var rtf: Data
 }
 
+extension NoteData {
+    init(id: UUID, frame: WidgetFrame, color: NoteColor, rtf: Data) {
+        self.init(id: id, x: frame.x, top: frame.top, width: frame.width, height: frame.height,
+                  collapsed: frame.collapsed, color: color, rtf: rtf)
+    }
+
+    var frame: WidgetFrame {
+        get { WidgetFrame(x: x, top: top, width: width, height: height, collapsed: collapsed) }
+        set { x = newValue.x; top = newValue.top; width = newValue.width; height = newValue.height; collapsed = newValue.collapsed }
+    }
+}
+
 /// Smallest size a note can be resized to.
 let minNoteSize = NSSize(width: 130, height: 70)
 
 /// User preferences for new notes, stored in UserDefaults.
-enum Prefs {
+/// (Snapping is a framework setting: `DesktopSettings.snapping`.)
+enum NotePrefs {
     private static let d = UserDefaults.standard
 
     static var color: NoteColor {
@@ -79,11 +88,6 @@ enum Prefs {
         }
     }
 
-    static var snapping: Bool {
-        get { d.object(forKey: "snapping") as? Bool ?? true }
-        set { d.set(newValue, forKey: "snapping") }
-    }
-
     static var font: NSFont {
         NSFontManager.shared.font(withFamily: fontFamily, traits: [], weight: 5, size: fontSize)
             ?? NSFont(name: "Helvetica", size: fontSize) ?? .systemFont(ofSize: fontSize)
@@ -92,52 +96,4 @@ enum Prefs {
     static var typingAttributes: [NSAttributedString.Key: Any] {
         [.font: font, .foregroundColor: textColor]
     }
-}
-
-enum Store {
-    static let fileURL: URL = {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("DesktopNotes", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent("notes.json")
-    }()
-
-    static func load() -> [NoteData] {
-        guard let data = try? Data(contentsOf: fileURL) else { return [] }
-        do {
-            return try JSONDecoder().decode([NoteData].self, from: data)
-        } catch {
-            // Never silently overwrite notes we failed to read: keep a copy.
-            let stamp = Int(Date().timeIntervalSince1970)
-            let backup = fileURL.deletingLastPathComponent().appendingPathComponent("notes.unreadable-\(stamp).json")
-            try? FileManager.default.copyItem(at: fileURL, to: backup)
-            NSLog("DesktopNotes: could not decode notes (\(error)); backed up to \(backup.path)")
-            return []
-        }
-    }
-
-    static func save(_ notes: [NoteData]) {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        do {
-            try encoder.encode(notes).write(to: fileURL, options: .atomic)
-        } catch {
-            NSLog("DesktopNotes: save failed: \(error)")
-        }
-    }
-}
-
-/// The app is never frontmost while you use a note, so there is no active menu bar
-/// to provide the standard editing shortcuts. Windows call this instead.
-func performStandardEditShortcut(_ event: NSEvent, from sender: Any?) -> Bool {
-    guard event.type == .keyDown, let key = event.charactersIgnoringModifiers?.lowercased() else { return false }
-    let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
-    var action: String?
-    if flags == .command {
-        action = ["x": "cut:", "c": "copy:", "v": "paste:", "a": "selectAll:", "z": "undo:"][key]
-    } else if flags == [.command, .shift], key == "z" {
-        action = "redo:"
-    }
-    guard let action else { return false }
-    return NSApp.sendAction(Selector(action), to: nil, from: sender)
 }

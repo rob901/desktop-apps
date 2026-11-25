@@ -4,14 +4,19 @@ Sticky notes for macOS that live on the desktop itself. They sit just above the
 desktop icons, so they're always behind your windows. They stay on every Space,
 and they stay visible (and editable) when you use Show Desktop.
 
+Built on [DesktopKit](https://github.com/rob901/desktop-widgets), which SwiftPM fetches automatically.
+
 ## Build
 
 ```sh
 ./build.sh           # builds build/DesktopNotes.app
 ./build.sh install   # also copies to /Applications and launches it
+
+# while changing the framework, build against a local checkout instead:
+DESKTOPKIT_PATH=../desktop-framework ./build.sh
 ```
 
-Requires the Xcode command-line tools (swiftc) and macOS 14+.
+Requires the Xcode command-line tools (Swift 5.9+) and macOS 14+.
 
 ## Use
 
@@ -20,6 +25,6 @@ Requires the Xcode command-line tools (swiftc) and macOS 14+.
 - `+` or ⌘N makes a new note. `×` deletes it.
 - Right-click the top bar to change the color.
 - Drag the top bar to move a note. Drag the bottom-right corner to resize it.
-- The menu-bar icon has New Note, Collapse All, Expand All, Open at Login, and Quit.
+- The menu-bar icon has New Note, Collapse All, Expand All, Preferences, Open at Login, and Quit.
 
 Notes are saved to `~/Library/Application Support/DesktopNotes/notes.json`.
