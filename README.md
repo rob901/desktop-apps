@@ -6,8 +6,9 @@ Each widget is its own app in its own folder, with its own `build.sh`.
 | Folder | App | What it does |
 |---|---|---|
 | [`claude-widget`](claude-widget) | Claude Usage | Claude plan usage (session and weekly %) with a day/week chart |
+| [`stickies-widget`](stickies-widget) | Desktop Notes | Sticky notes on the desktop: rich text, colors, collapse, snapping |
 
-Desktop Notes (sticky notes) lives in its own repo: [desktop-stickies](https://github.com/rob901/desktop-stickies).
+`stickies-widget` used to be the [desktop-stickies](https://github.com/rob901/desktop-stickies) repo; its history is kept here.
 
 ## Building a widget
 

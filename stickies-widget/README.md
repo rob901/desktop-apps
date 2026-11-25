@@ -13,7 +13,7 @@ Built on [DesktopKit](https://github.com/rob901/desktop-widgets), which SwiftPM 
 ./build.sh install   # also copies to /Applications and launches it
 
 # while changing the framework, build against a local checkout instead:
-DESKTOPKIT_PATH=../desktop-framework ./build.sh
+DESKTOPKIT_PATH=../../desktop-framework ./build.sh
 ```
 
 Requires the Xcode command-line tools (Swift 5.9+) and macOS 14+.
